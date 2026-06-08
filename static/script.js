@@ -11,6 +11,8 @@
 async function analyzeVideo() {
     const url = document.getElementById('youtubeUrl').value.trim();
     const btn = document.getElementById('analyzeBtn');
+    const btnText = document.getElementById('btnText');
+    const btnLoader = document.getElementById('btnLoader');
     const loading = document.getElementById('loading');
     const error = document.getElementById('error');
     const results = document.getElementById('results');
@@ -32,7 +34,8 @@ async function analyzeVideo() {
     
     // Show loading state
     btn.disabled = true;
-    document.getElementById('btnText').textContent = 'Analyzing...';
+    btnText.textContent = 'Analyzing...';
+    btnLoader.style.display = 'inline-block';
     loading.style.display = 'block';
     updateLoadingStep('Extracting transcript...');
     
@@ -59,8 +62,53 @@ async function analyzeVideo() {
     } finally {
         loading.style.display = 'none';
         btn.disabled = false;
-        document.getElementById('btnText').textContent = 'Analyze Video';
+        btnText.textContent = 'Analyze Video';
+        btnLoader.style.display = 'none';
     }
+}
+
+/**
+ * Apply the selected theme to the page.
+ * @param {string} theme - The theme name ('dark' or 'light')
+ */
+function applyTheme(theme) {
+    const normalizedTheme = theme === 'light' ? 'light' : 'dark';
+    document.body.dataset.theme = normalizedTheme;
+
+    const themeToggle = document.getElementById('themeToggle');
+    if (themeToggle) {
+        const isDark = normalizedTheme === 'dark';
+        themeToggle.setAttribute('aria-pressed', String(isDark));
+        themeToggle.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+        const toggleText = themeToggle.querySelector('.theme-toggle-text');
+        const toggleIcon = themeToggle.querySelector('.theme-toggle-icon');
+        if (toggleText) toggleText.textContent = isDark ? 'Dark mode' : 'Light mode';
+        if (toggleIcon) toggleIcon.textContent = isDark ? '☀️' : '🌙';
+    }
+
+    const themeColor = document.querySelector('meta[name="theme-color"]');
+    if (themeColor) {
+        themeColor.setAttribute('content', isDarkTheme(normalizedTheme) ? '#0f172a' : '#f8fafc');
+    }
+
+    localStorage.setItem('yt-fact-checker-theme', normalizedTheme);
+}
+
+/**
+ * Check whether the given theme is dark.
+ * @param {string} theme - The theme name.
+ * @returns {boolean} True if the theme is dark.
+ */
+function isDarkTheme(theme) {
+    return theme !== 'light';
+}
+
+/**
+ * Toggle between light and dark themes.
+ */
+function toggleTheme() {
+    const currentTheme = document.body.dataset.theme || 'dark';
+    applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
 }
 
 /**
@@ -239,6 +287,14 @@ function escapeHtml(text) {
 
 // Event listener for Enter key on URL input
 document.addEventListener('DOMContentLoaded', function() {
+    const savedTheme = localStorage.getItem('yt-fact-checker-theme') || 'dark';
+    applyTheme(savedTheme);
+
+    const themeToggle = document.getElementById('themeToggle');
+    if (themeToggle) {
+        themeToggle.addEventListener('click', toggleTheme);
+    }
+
     const urlInput = document.getElementById('youtubeUrl');
     if (urlInput) {
         urlInput.addEventListener('keypress', function(e) {
